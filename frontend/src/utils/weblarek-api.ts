@@ -52,7 +52,7 @@ class Api {
 
 	private refreshToken = () => {
 		return this.request<UserResponseToken>('/auth/token', {
-			method: 'GET',
+			method: 'POST',
 			credentials: 'include'
 		});
 	};
