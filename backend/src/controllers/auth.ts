@@ -1,17 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import { Error as MongooseError } from 'mongoose';
 import User from '../models/user';
 import UnauthorizedError from '../errors/unauthorized-error';
 import NotFoundError from '../errors/not-found-error';
 import BadRequestError from '../errors/bad-request-error';
-import ConflictError from '../errors/conflict-error';
 import {
   generateTokens,
   setRefreshTokenCookie,
   clearRefreshTokenCookie,
   verifyToken,
 } from '../utils/auth';
+import { mapDbError } from '../utils/errors';
 
 const sendAuthResponse = (
   res: Response,
@@ -78,17 +77,10 @@ export const register = (req: Request, res: Response, next: NextFunction) => {
         refreshToken,
       ));
     })
-    .catch((err) => {
-      if (err instanceof MongooseError.ValidationError) {
-        return next(new BadRequestError(err.message));
-      }
-
-      if (err instanceof Error && err.message.includes('E11000')) {
-        return next(new ConflictError('Пользователь с таким email уже существует'));
-      }
-
-      return next(err);
-    });
+    .catch((err) => next(mapDbError(
+      err,
+      'Пользователь с таким email уже существует',
+    )));
 };
 
 export const getCurrentUser = (req: Request, res: Response, next: NextFunction) => {
@@ -103,7 +95,7 @@ export const getCurrentUser = (req: Request, res: Response, next: NextFunction) 
         success: true,
       });
     })
-    .catch(next);
+    .catch((err) => next(mapDbError(err)));
 };
 
 export const logout = (req: Request, res: Response, next: NextFunction) => {
@@ -131,7 +123,7 @@ export const logout = (req: Request, res: Response, next: NextFunction) => {
       clearRefreshTokenCookie(res);
       return res.status(200).json({ success: true });
     })
-    .catch(next);
+    .catch((err) => next(mapDbError(err)));
 };
 
 export const refreshAccessToken = (req: Request, res: Response, next: NextFunction) => {
@@ -176,5 +168,5 @@ export const refreshAccessToken = (req: Request, res: Response, next: NextFuncti
         newRefreshToken,
       ));
     })
-    .catch(next);
+    .catch((err) => next(mapDbError(err)));
 };

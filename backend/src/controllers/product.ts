@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import Product from '../models/product';
-import ConflictError from '../errors/conflict-error';
 import NotFoundError from '../errors/not-found-error';
 import { moveImageToPermanent } from '../utils/file';
+import { mapDbError } from '../utils/errors';
 
 const prepareProductData = async (body: Request['body']) => {
   const productData = { ...body };
@@ -28,12 +28,10 @@ export const createProduct = (req: Request, res: Response, next: NextFunction) =
     .then((product) => {
       res.status(201).json(product);
     })
-    .catch((err) => {
-      if (err instanceof Error && err.message.includes('E11000')) {
-        return next(new ConflictError('Товар с таким названием уже существует'));
-      }
-      return next(err);
-    });
+    .catch((err) => next(mapDbError(
+      err,
+      'Товар с таким названием уже существует',
+    )));
 };
 
 export const updateProduct = (req: Request, res: Response, next: NextFunction) => {
@@ -46,12 +44,10 @@ export const updateProduct = (req: Request, res: Response, next: NextFunction) =
     .then((product) => {
       res.status(200).json(product);
     })
-    .catch((err) => {
-      if (err instanceof Error && err.message.includes('E11000')) {
-        return next(new ConflictError('Товар с таким названием уже существует'));
-      }
-      return next(err);
-    });
+    .catch((err) => next(mapDbError(
+      err,
+      'Товар с таким названием уже существует',
+    )));
 };
 
 export const deleteProduct = (req: Request, res: Response, next: NextFunction) => {
@@ -60,5 +56,5 @@ export const deleteProduct = (req: Request, res: Response, next: NextFunction) =
     .then((product) => {
       res.status(200).json(product);
     })
-    .catch(next);
+    .catch((err) => next(mapDbError(err)));
 };
