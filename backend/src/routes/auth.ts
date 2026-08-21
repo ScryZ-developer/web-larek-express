@@ -17,7 +17,7 @@ const router = Router();
 
 router.post('/login', celebrate(loginValidator), login);
 router.post('/register', celebrate(registerValidator), register);
-router.get('/token', refreshAccessToken);
+router.post('/token', refreshAccessToken);
 router.get('/logout', logout);
 router.get('/user', auth, getCurrentUser);
 
