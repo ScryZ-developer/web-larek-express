@@ -14,7 +14,15 @@ export const moveImageToPermanent = async (fileName: string) => {
   const basename = path.basename(fileName);
   const source = path.join(tempDir, basename);
   const destination = path.join(imagesDir, basename);
-  await fs.rename(source, destination);
+
+  try {
+    await fs.access(source);
+  } catch {
+    return;
+  }
+
+  await fs.copyFile(source, destination);
+  await fs.unlink(source);
 };
 
 export const deleteImage = async (fileName: string) => {
