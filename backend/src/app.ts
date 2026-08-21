@@ -13,7 +13,6 @@ import { requestLogger, errorLogger } from './middlewares/logger';
 import errorHandler from './middlewares/error-handler';
 import NotFoundError from './errors/not-found-error';
 import initCron from './utils/cron';
-import { getTempPath, getImagesPath } from './utils/file';
 
 const app = express();
 
@@ -25,9 +24,6 @@ const publicDir = path.join(__dirname, 'public');
     fs.mkdirSync(dirPath, { recursive: true });
   }
 });
-
-getTempPath();
-getImagesPath();
 
 app.use(cors({
   origin: ORIGIN_ALLOW,
