@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { faker } from '@faker-js/faker';
-import Product from '../models/product';
+import Product, { IProduct } from '../models/product';
 import BadRequestError from '../errors/bad-request-error';
 
 export const createOrder = (req: Request, res: Response, next: NextFunction) => {
@@ -8,16 +8,30 @@ export const createOrder = (req: Request, res: Response, next: NextFunction) => 
 
   Product.find({ _id: { $in: items } })
     .then((products) => {
-      if (products.length !== items.length) {
-        throw new BadRequestError('Один или несколько товаров не найдены');
-      }
+      const productsById = new Map(
+        products.map((product) => [product._id.toString(), product]),
+      );
 
-      const unavailableProduct = products.find((product) => product.price === null);
+      const orderProducts: IProduct[] = items.map((id: string) => {
+        const product = productsById.get(id);
+
+        if (!product) {
+          throw new BadRequestError('Один или несколько товаров не найдены');
+        }
+
+        return product;
+      });
+
+      const unavailableProduct = orderProducts.find((product) => product.price === null);
       if (unavailableProduct) {
         throw new BadRequestError('Товар недоступен для покупки');
       }
 
-      const calculatedTotal = products.reduce((sum, product) => sum + (product.price ?? 0), 0);
+      const calculatedTotal = orderProducts.reduce(
+        (sum, product) => sum + (product.price ?? 0),
+        0,
+      );
+
       if (calculatedTotal !== total) {
         throw new BadRequestError('Сумма заказа не совпадает с суммой товаров');
       }
