@@ -1,6 +1,7 @@
 import { ErrorRequestHandler } from 'express';
 import { Error as MongooseError } from 'mongoose';
 import { isCelebrateError } from 'celebrate';
+import multer from 'multer';
 import BadRequestError from '../errors/bad-request-error';
 import NotFoundError from '../errors/not-found-error';
 import ConflictError from '../errors/conflict-error';
@@ -18,6 +19,14 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
       || err.details.get('headers')?.message
       || 'Ошибка валидации данных';
     return res.status(400).json({ message: message.replace(/"/g, '') });
+  }
+
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ message: err.message });
+  }
+
+  if (err instanceof Error && err.message === 'Недопустимый тип файла') {
+    return res.status(400).json({ message: err.message });
   }
 
   if (err instanceof MongooseError.ValidationError) {
