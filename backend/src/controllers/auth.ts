@@ -162,12 +162,13 @@ export const refreshAccessToken = (req: Request, res: Response, next: NextFuncti
         user._id.toString(),
       );
 
+      const tokens = user.tokens
+        .filter(({ token }) => token !== refreshToken)
+        .concat([{ token: newRefreshToken }]);
+
       return User.updateOne(
         { _id: user._id },
-        {
-          $pull: { tokens: { token: refreshToken } },
-          $push: { tokens: { token: newRefreshToken } },
-        },
+        { $set: { tokens } },
       ).then(() => sendAuthResponse(
         res,
         user,
